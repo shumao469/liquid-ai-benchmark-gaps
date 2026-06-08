@@ -1,0 +1,4 @@
+study,task,model,metric_name,metric_value,train_time_sec,infer_time_ms,params,source_type,source_note
+Your_small_benchmark,physionet,lstm,AUROC,0.812,534.2,3.8,25412,your_run,replace with actual value
+Your_small_benchmark,physionet,ltc,AUROC,0.826,611.5,4.1,24100,your_run,replace with actual value
+Your_small_benchmark,physionet,cfc,AUROC,0.829,403.9,2.7,23890,your_run,replace with actual value

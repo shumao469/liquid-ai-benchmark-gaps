@@ -1,0 +1,10 @@
+study,year,model_family,domain,evidence_category,evidence_type,strength,public_code,public_data,real_world_validation,multimodal,direct_ood_evaluation,source_note
+Lechner2020_NCP,2020,NCP,driving,direct,real-world validation,direct,1,0,1,0,1,Nature Machine Intelligence NCP driving/autonomy paper
+Lechner2020_NCP,2020,NCP,driving,direct,saliency stability / auditability,direct,1,0,1,0,1,Auditable autonomy and compact controller evidence
+Hasani2021_LTC,2021,LTC,time-series benchmark,adjacent,public code benchmark,methodological,1,1,0,0,0,"Official LTC repository includes HAR, occupancy, traffic, ozone, power, gesture scripts"
+Hasani2021_LTC,2021,LTC,regular sensor classification,adjacent,HAR / occupancy reproducibility,methodological,1,1,0,0,0,HAR and occupancy are public tasks in the LTC repository
+Hasani2022_CfC,2022,CfC,irregular clinical time-series,adjacent,PhysioNet 2012 benchmark,methodological,1,1,0,0,0,Official CfC repository includes PhysioNet training entry
+Hasani2022_CfC,2022,CfC,sequence modeling,broader background,closed-form continuous-time update,methodological,1,1,0,0,0,CfC closed-form continuous-time model
+ncps_library,2024,LTC/CfC/NCP,software reproducibility,broader background,unified PyTorch/TensorFlow implementation,methodological,1,0,0,0,0,ncps provides PyTorch and TensorFlow modules for LTC and CfC
+PhysioNet2012,2012,dataset,irregular clinical time-series,broader background,public irregular ICU benchmark,dataset,0,1,1,0,0,PhysioNet/CinC Challenge 2012 ICU mortality prediction data
+UCI_HAR,2012,dataset,regular sensor classification,broader background,public regular HAR benchmark,dataset,0,1,0,0,0,UCI HAR smartphone activity recognition dataset
