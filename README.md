@@ -1,4 +1,4 @@
-# Liquid AI benchmark gaps
+# Liquid AI benchmark gaps DOI: 10.5281/zenodo.20588946 
 
 This repository supports the Comment **"Liquid AI needs sharper evidence, not broader claims"**.
 
