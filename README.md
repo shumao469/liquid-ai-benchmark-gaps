@@ -1,4 +1,4 @@
-# Liquid Neural Network Revision Code
+# Liquid Neural Network
 
 This branch contains the scientific implementation for the npj Robotics revision of *Liquid neural networks for embodied intelligence: From continuous-time mechanisms to deployment benchmarks*. It includes the model families, simulated tracking task, offline sequence pipeline, analysis code, experiment design templates, and tests.
 
