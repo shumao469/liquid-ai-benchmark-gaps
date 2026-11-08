@@ -1,0 +1,109 @@
+experiment:
+  name: closed_loop_ultra_small_pilot
+  seed: 20261102
+  deterministic_torch: true
+  development_only: true
+
+formal:
+  required: false
+
+tuning:
+  seed: 17
+  learning_rates: [0.0003, 0.001]
+  weight_decays: [0.0, 0.0001]
+  epochs: 1
+
+environment:
+  kind: reacher_v5
+  horizon_steps: 24
+  frame_skip: 2
+  trajectory_family: lissajous
+  amplitude_range: [0.15, 0.30]
+  frequency_range_hz: [0.05, 0.12]
+  action_limit: 1.0
+  velocity_failure_limit: 80.0
+  joint_position_failure_limit: 3.0
+
+controller:
+  joint_kp: 10.0
+  joint_kd: 1.0
+  actuator_gear: 200.0
+  observation_alpha: 0.85
+  velocity_decay: 0.995
+
+dataset:
+  plant_perturbations_during_rollout: false
+  perturbation:
+    sensor_noise_std: 0.002
+    timestamp_measurement_jitter_std: 0.0005
+
+training_corruption:
+  seed: 20261104
+  clean_fraction: 0.50
+  dropout_probability_range: [0.05, 0.20]
+  burst_lengths: [2, 3]
+
+splits:
+  train: {episodes: 2, episode_seed_start: 72100, schedule_seed_start: 82100}
+  val: {episodes: 1, episode_seed_start: 73100, schedule_seed_start: 83100}
+  test: {episodes: 1, episode_seed_start: 74100, schedule_seed_start: 84100}
+
+models:
+  input_dim: 19
+  state_dim: 4
+  hidden_dim: 64
+  ode: {max_step: 0.02}
+  ctrnn: {initial_tau: 0.20, min_tau: 0.001, max_step: 0.02}
+  liquid: {cfc_mode: default, ode_unfolds: 6}
+
+matching:
+  basis: effective_active_trainable_parameters
+  target_parameters: 20000
+  tolerance_fraction: 0.05
+  minimum_hidden_dim: 7
+  maximum_hidden_dim: 192
+  registered_models: [lstm, odernn, ctrnn, ltc, cfc, ncp_cfc, random_sparse_cfc]
+  ncp_sparsity: 0.50
+  ncp_seed: 20261102
+  random_topology_seed: 20261103
+
+training:
+  seeds: [101]
+  epochs: 1
+  early_stopping_enabled: true
+  patience: 1
+  minimum_delta: 1.0e-7
+  batch_size: 2
+  window_steps: 8
+  burn_in_steps: 0
+  learning_rate: 0.001
+  weight_decay: 1.0e-5
+  gradient_clip_norm: 1.0
+
+evaluation:
+  require_complete_registered_checkpoint_set: false
+  latency_warmup_calls: 2
+  latency_measured_calls: 5
+  max_test_episodes: 1
+  iid_dropout_probabilities: [0.0, 0.3]
+  burst_lengths: [0, 3]
+  burst_stationary_probability: 0.30
+  burst_missing_fraction_absolute_tolerance: 0.01
+  burst_mean_relative_tolerance: 0.10
+  enforce_burst_realization_gate: false
+  controlled_single_burst_length_steps: 10
+  delay_steps: [0, 2]
+  base_perturbation:
+    sensor_noise_std: 0.002
+    timestamp_measurement_jitter_std: 0.0005
+  nonlearned_baselines: [full_state_pd, zoh_pd, kalman_pd]
+  kalman:
+    process_variance: 0.001
+    measurement_variance: 0.002
+    initial_variance: 1.0
+  recovery_floor_m: 0.02
+  recovery_baseline_multiplier: 1.0
+  recovery_baseline_window_steps: 50
+  recovery_consecutive_steps: 10
+  analysis_seed: 20261105
+  bootstrap_replicates: 50

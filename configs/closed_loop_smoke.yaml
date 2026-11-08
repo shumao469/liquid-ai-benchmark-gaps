@@ -1,0 +1,60 @@
+experiment:
+  name: closed_loop_smoke
+  seed: 20261102
+  deterministic_torch: true
+
+environment:
+  kind: point_mass_smoke
+  horizon_steps: 64
+  frame_skip: 2
+  trajectory_family: lissajous
+  amplitude_range: [0.45, 0.75]
+  frequency_range_hz: [0.08, 0.18]
+  action_limit: 1.0
+  position_limit: 1.95
+
+controller:
+  kp: 3.5
+  kd: 1.4
+  mass: 0.20
+  observation_alpha: 0.85
+  velocity_decay: 0.995
+
+dataset:
+  episodes: 2
+  first_episode_seed: 71000
+  plant_perturbations_during_rollout: true
+  perturbation:
+    iid_dropout_probability: 0.10
+    burst_start_probability: 0.03
+    burst_length_steps: 5
+    delay_steps: 1
+    sensor_noise_std: 0.002
+    timestamp_measurement_jitter_std: 0.0005
+    actuator_gain: 0.90
+    impulse_magnitude: 0.15
+    impulse_duration_steps: 2
+
+models:
+  input_dim: 21
+  state_dim: 4
+  hidden_dim: 16
+  names: [mlp, gru, lstm, ctrnn, odernn, ltc, cfc]
+  topology:
+    kind: dense
+    sparsity: 0.50
+    seed: 20261102
+  ode:
+    max_step: 0.02
+  ctrnn:
+    initial_tau: 0.20
+    min_tau: 0.001
+    max_step: 0.02
+
+smoke:
+  sequence_steps: 8
+  batch_size: 2
+  closed_loop_steps: 12
+  closed_loop_episode_seed: 81000
+  closed_loop_schedule_seed: 91000
+

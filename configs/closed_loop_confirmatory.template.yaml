@@ -1,0 +1,154 @@
+# Design reference only. The host-specific values below are intentionally
+# unset. This template does not authorize tuning, training, or test access.
+experiment:
+  name: closed_loop_confirmatory
+  seed: 20261102
+  deterministic_torch: true
+  development_only: false
+
+formal:
+  required: true
+  validation_recompute_relative_tolerance: 1.0e-5
+  validation_recompute_absolute_tolerance: 1.0e-7
+  environment_artifact: runs/formal_freeze/environment.json
+  preflight_artifact: runs/formal_freeze/preflight_receipt.json
+  run_registry_namespace_artifact: runs/formal_freeze/run_registry_namespace.json
+  pretraining_master_artifact: runs/formal_freeze/pretraining_master_release.json
+  pretraining_audit_receipt: runs/formal_freeze/pretraining_audit_receipt.json
+
+# Formal GPU evidence is collected only by this byte-anchored System32 binary.
+# PATH lookup, aliases, wrappers, and copied executables are not accepted.
+trusted_nvidia_smi:
+  executable_path: C:/Windows/System32/nvidia-smi.exe
+  executable_sha256: "__SET_TRUSTED_NVIDIA_SMI_SHA256__"
+
+controller_selection:
+  artifact: runs/formal_freeze/controller_selection.json
+  kp_grid: [5.0, 10.0, 20.0, 40.0]
+  kd_grid: [0.5, 1.0, 2.0, 4.0]
+
+tuning:
+  artifact: runs/formal_freeze/tuning_selection.json
+  # This root and namespace path are deliberately absolute. The write-once
+  # namespace freezes all 28 candidate/result/authorization/completion paths,
+  # exactly one lease-session slot per candidate and all attempt IDs before GPU work.
+  # external create-only custody receipts require canonical + byte hash anchors.
+  output_root: "__SET_ABSOLUTE_TUNING_OUTPUT_ROOT__"
+  namespace_artifact: "__SET_ABSOLUTE_NAMESPACE_ARTIFACT__"
+  gpu_lease_root: "__SET_ABSOLUTE_GPU_LEASE_ROOT__"
+  lease_custody_receipt: "__SET_ABSOLUTE_LEASE_CUSTODY_RECEIPT__"
+  lease_session_slots: 28
+  physical_gpu_index: 0
+  gpu_uuid: "__SET_PHYSICAL_GPU_UUID__"
+  gpu_pci_bus_id: "__SET_PHYSICAL_GPU_PCI_BUS_ID__"
+  seed: 17
+  learning_rates: [0.0003, 0.001]
+  weight_decays: [0.0, 0.0001]
+  epochs: 20
+  optimizer_steps_per_epoch: 500
+  planned_optimizer_steps: 10000
+
+environment:
+  kind: reacher_v5
+  horizon_steps: 500
+  frame_skip: 2
+  trajectory_family: lissajous
+  amplitude_range: [0.15, 0.50]
+  frequency_range_hz: [0.05, 0.25]
+  action_limit: 1.0
+  velocity_failure_limit: 80.0
+  joint_position_failure_limit: 3.0
+
+controller:
+  joint_kp: 40.0
+  joint_kd: 4.0
+  actuator_gear: 200.0
+  observation_alpha: 0.85
+  velocity_decay: 0.995
+
+dataset:
+  plant_perturbations_during_rollout: false
+  perturbation:
+    sensor_noise_std: 0.002
+    timestamp_measurement_jitter_std: 0.0005
+
+training_corruption:
+  seed: 20261104
+  clean_fraction: 0.50
+  dropout_probability_range: [0.05, 0.20]
+  burst_lengths: [2, 3]
+
+splits:
+  train: {episodes: 2000, episode_seed_start: 100000, schedule_seed_start: 400000}
+  val: {episodes: 200, episode_seed_start: 200000, schedule_seed_start: 500000}
+  test: {episodes: 200, episode_seed_start: 300000, schedule_seed_start: 600000}
+
+models:
+  input_dim: 19
+  state_dim: 4
+  ode: {max_step: 0.02}
+  ctrnn: {initial_tau: 0.20, min_tau: 0.001, max_step: 0.02}
+  liquid: {cfc_mode: default, ode_unfolds: 6}
+
+matching:
+  basis: effective_active_trainable_parameters
+  target_parameters: 20000
+  tolerance_fraction: 0.05
+  minimum_hidden_dim: 7
+  maximum_hidden_dim: 192
+  registered_models: [lstm, odernn, ctrnn, ltc, cfc, ncp_cfc, random_sparse_cfc]
+  ncp_sparsity: 0.50
+  ncp_seed: 20261102
+  random_topology_seed: 20261103
+
+training:
+  seeds: [101, 202, 303, 404, 505]
+  epochs: 100
+  early_stopping_enabled: false
+  optimizer_steps_per_epoch: 500
+  planned_optimizer_steps: 50000
+  minimum_delta: 1.0e-7
+  batch_size: 32
+  window_steps: 64
+  burn_in_steps: 16
+  learning_rate: 0.001
+  # Formal training reads the per-model optimizer pair from the frozen
+  # seed-17 tuning artifact. These in-grid values are a non-formal fallback.
+  weight_decay: 0.0
+  gradient_clip_norm: 1.0
+
+evaluation:
+  checkpoint_release_artifact: runs/formal_freeze/closed_loop_checkpoint_release.json
+  test_release_artifact: runs/formal_freeze/closed_loop_test_release.json
+  require_complete_registered_checkpoint_set: true
+  latency_warmup_calls: 1000
+  latency_measured_calls: 10000
+  iid_dropout_probabilities: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+  burst_lengths: [0, 1, 2, 5, 10, 20]
+  burst_stationary_probability: 0.30
+  burst_missing_fraction_absolute_tolerance: 0.01
+  burst_mean_relative_tolerance: 0.10
+  enforce_burst_realization_gate: true
+  controlled_single_burst_length_steps: 10
+  delay_steps: [0, 1, 2, 4, 8]
+  base_perturbation:
+    sensor_noise_std: 0.002
+    timestamp_measurement_jitter_std: 0.0005
+  nonlearned_baselines: [full_state_pd, zoh_pd, kalman_pd]
+  kalman:
+    process_variance: 0.001
+    measurement_variance: 0.002
+    initial_variance: 1.0
+  recovery_floor_m: 0.02
+  recovery_baseline_multiplier: 1.0
+  recovery_baseline_window_steps: 50
+  recovery_consecutive_steps: 10
+  # Fixed-horizon tracking estimand: after any registered failure, remaining
+  # steps are scored at this conservative distance so early crashes cannot look
+  # artificially accurate.
+  failure_tracking_penalty_m: 1.0
+  # A lower nAURC can support superiority only when the paired 95% upper bound
+  # for first-minus-second failure-rate difference is <= 2 percentage points.
+  failure_noninferiority_margin_absolute: 0.02
+  analysis_seed: 20261105
+  bootstrap_replicates: 10000

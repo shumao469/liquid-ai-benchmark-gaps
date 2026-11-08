@@ -1,0 +1,92 @@
+# Design reference only. An independent run requires its own frozen protocol,
+# analysis plan, verified dataset manifests, and checkpoint/test release.
+experiment:
+  name: offline_fixed_checkpoint_confirmatory
+  datasets: [har, physionet2012]
+  seeds: [101, 202, 303, 404, 505]
+  device: cuda
+  deterministic_torch: true
+
+data:
+  root: ../revision_data
+  manifest_dir: ../manifests/offline
+  har:
+    split_seed: 20261102
+    validation_subject_fraction: 0.20
+    sample_period_seconds: 0.02
+  physionet2012:
+    split_seed: 20261102
+    train_fraction: 0.70
+    validation_fraction: 0.15
+    test_fraction: 0.15
+    horizon_hours: 48
+
+features:
+  # Every family receives identical value/mask/age/delta channels.  In addition,
+  # ODE-RNN/LTC/CfC consume the untransformed elapsed time through their dynamics.
+  channels: [values, mask, age, dt]
+
+models:
+  names: [lstm, ode-rnn, ltc, cfc]
+  hidden_dim: 64
+  # Frozen before outcome training. The task-specific target is the parameter
+  # count of the originally registered LSTM width 64 under that task's I/O
+  # dimensions; every comparator is within 1%, tighter than the ±5% gate.
+  parameter_matching_target_basis: lstm_hidden_dim_64_per_task
+  parameter_matching_tolerance_percent: 5.0
+  hidden_dims:
+    har:
+      lstm: 64
+      ode-rnn: 67
+      ltc: 64
+      cfc: 32
+    physionet2012:
+      lstm: 64
+      ode-rnn: 73
+      ltc: 64
+      cfc: 51
+  ode_max_step: 1.0
+  ltc_ode_unfolds: 6
+  cfc_mode: default
+
+training:
+  # No severity-specific retraining and no early stopping.  Validation only
+  # selects one checkpoint from the completed fixed optimizer budget.
+  optimizer_steps: 20000
+  validation_interval: 500
+  batch_size: 64
+  evaluation_batch_size: 128
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+
+corruption:
+  base_seed: 20261102
+  mcar_levels: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  temporal_block_levels: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+  retrain_per_severity: false
+
+latency:
+  batch_size: 1
+  warmup: 1000
+  repeats: 10000
+  synchronize_gpu: true
+  host_to_device_transfer_included: false
+
+smoke:
+  seed: 909
+  max_examples_per_split: 4
+
+formal:
+  enabled: true
+  expected_checkpoint_count: 40
+  test_requires_checkpoint_release: true
+  protocol_files: [../docs/PROTOCOL.md, ../docs/ANALYSIS_PLAN.md]
+  bootstrap_replicates: 10000
+  analysis_seed: 20261105
+  comparisons:
+    - [ltc, lstm]
+    - [ltc, ode-rnn]
+    - [cfc, lstm]
+    - [cfc, ode-rnn]
+

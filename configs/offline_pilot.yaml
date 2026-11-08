@@ -1,0 +1,67 @@
+experiment:
+  name: offline_fixed_checkpoint_gpu_pilot
+  datasets: [har, physionet2012]
+  seeds: [101]
+  device: cuda:0
+  deterministic_torch: true
+  confirmatory_evidence: false
+
+data:
+  root: ../revision_data
+  manifest_dir: ../manifests/offline
+  har:
+    split_seed: 20261102
+    validation_subject_fraction: 0.20
+    sample_period_seconds: 0.02
+  physionet2012:
+    split_seed: 20261102
+    train_fraction: 0.70
+    validation_fraction: 0.15
+    horizon_hours: 48
+
+features:
+  channels: [values, mask, age, dt]
+
+models:
+  names: [lstm, ode-rnn, ltc, cfc]
+  hidden_dim: 64
+  parameter_matching_target_basis: lstm_hidden_dim_64_per_task
+  parameter_matching_tolerance_percent: 5.0
+  hidden_dims:
+    har:
+      lstm: 64
+      ode-rnn: 67
+      ltc: 64
+      cfc: 32
+    physionet2012:
+      lstm: 64
+      ode-rnn: 73
+      ltc: 64
+      cfc: 51
+  ode_max_step: 1.0
+  ltc_ode_unfolds: 6
+  cfc_mode: default
+
+training:
+  # Deliberately too short for scientific inference; this only exercises the
+  # GPU, checkpoint, validation, and fixed-checkpoint evaluation paths.
+  optimizer_steps: 4
+  validation_interval: 2
+  batch_size: 64
+  evaluation_batch_size: 128
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+
+corruption:
+  base_seed: 20261102
+  mcar_levels: [0.0, 0.3]
+  temporal_block_levels: [0.0, 0.4]
+  retrain_per_severity: false
+
+latency:
+  batch_size: 1
+  warmup: 2
+  repeats: 10
+  synchronize_gpu: true
+  host_to_device_transfer_included: false

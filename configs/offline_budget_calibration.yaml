@@ -1,0 +1,64 @@
+experiment:
+  name: offline_validation_only_budget_calibration
+  datasets: [har]
+  seeds: [17]
+  device: cuda:0
+  deterministic_torch: true
+  confirmatory_evidence: false
+  test_metrics_permitted: false
+
+data:
+  root: ../revision_data
+  manifest_dir: ../manifests/offline
+  har:
+    split_seed: 20261102
+    validation_subject_fraction: 0.20
+    sample_period_seconds: 0.02
+  physionet2012:
+    split_seed: 20261102
+    train_fraction: 0.70
+    validation_fraction: 0.15
+    horizon_hours: 48
+
+features:
+  channels: [values, mask, age, dt]
+
+models:
+  names: [lstm, ode-rnn, ltc, cfc]
+  hidden_dim: 64
+  parameter_matching_target_basis: lstm_hidden_dim_64_per_task
+  parameter_matching_tolerance_percent: 5.0
+  hidden_dims:
+    har:
+      lstm: 64
+      ode-rnn: 67
+      ltc: 64
+      cfc: 32
+    physionet2012:
+      lstm: 64
+      ode-rnn: 73
+      ltc: 64
+      cfc: 51
+  ode_max_step: 1.0
+  ltc_ode_unfolds: 6
+  cfc_mode: default
+
+training:
+  optimizer_steps: 2000
+  validation_interval: 100
+  batch_size: 64
+  evaluation_batch_size: 128
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+
+budget_calibration:
+  tuning_seed: 17
+  candidate_fixed_budgets: [5000, 10000, 20000]
+  plateau_window_validations: 5
+  slope_threshold_metric_per_1000_steps: 0.005
+  recent_best_gain_threshold: 0.005
+  minimum_margin_after_best_validations: 2
+  freeze_rule: all_models_must_plateau
+  test_evaluation: forbidden
+  corruption_evaluation: forbidden
