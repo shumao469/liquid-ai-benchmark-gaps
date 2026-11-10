@@ -1,12 +1,8 @@
-# Liquid AI benchmark gaps DOI: 10.5281/zenodo.20588946 
+# Liquid AI benchmark gaps 
 
 This repository supports the Comment **"Liquid AI needs sharper evidence, not broader claims"**.
 
 The repository contains code, derived results and figure-generation scripts for a lightweight public-data sanity check comparing LSTM, liquid time-constant networks (LTCs) and closed-form continuous-time networks (CfCs) on regular and irregular time-series tasks.
-
-## Purpose
-
-The benchmark is intended as an illustrative reproducibility check, not as a definitive model ranking. It was used to support Fig. 1b–e of the Comment, which argues that liquid and continuous-time models should be evaluated jointly for performance, efficiency and degradation under missingness.
 
 ## Tasks
 
