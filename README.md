@@ -1,6 +1,4 @@
-# Liquid AI benchmark gaps 
-
-This repository supports the Comment **"Liquid AI needs sharper evidence, not broader claims"**.
+# Liquid Neural Network benchmark gaps 
 
 The repository contains code, derived results and figure-generation scripts for a lightweight public-data sanity check comparing LSTM, liquid time-constant networks (LTCs) and closed-form continuous-time networks (CfCs) on regular and irregular time-series tasks.
 
