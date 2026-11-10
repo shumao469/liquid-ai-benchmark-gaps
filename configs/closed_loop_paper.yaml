@@ -1,0 +1,110 @@
+experiment:
+  name: paper_reaching_replication
+  seed: 20261102
+  deterministic_torch: true
+  development_only: true
+
+formal:
+  required: false
+
+reproduction:
+  episodes: 20
+  episode_seed_start: 810000
+  schedule_seed_start: 1910000
+
+tuning:
+  seed: 17
+  learning_rates: [0.0003, 0.001]
+  weight_decays: [0.0, 0.0001]
+  epochs: 20
+  optimizer_steps_per_epoch: 500
+  planned_optimizer_steps: 10000
+
+environment:
+  kind: reacher_v5
+  horizon_steps: 500
+  frame_skip: 2
+  trajectory_family: lissajous
+  amplitude_range: [0.15, 0.50]
+  frequency_range_hz: [0.05, 0.25]
+  action_limit: 1.0
+  velocity_failure_limit: 80.0
+  joint_position_failure_limit: 3.0
+
+controller:
+  joint_kp: 40.0
+  joint_kd: 4.0
+  actuator_gear: 200.0
+  observation_alpha: 0.85
+  velocity_decay: 0.995
+
+dataset:
+  plant_perturbations_during_rollout: false
+  perturbation:
+    sensor_noise_std: 0.002
+    timestamp_measurement_jitter_std: 0.0005
+
+training_corruption:
+  seed: 20261104
+  clean_fraction: 0.50
+  dropout_probability_range: [0.05, 0.20]
+  burst_lengths: [2, 3]
+
+splits:
+  train: {episodes: 2000, episode_seed_start: 100000, schedule_seed_start: 400000}
+  val: {episodes: 200, episode_seed_start: 200000, schedule_seed_start: 500000}
+  test: {episodes: 200, episode_seed_start: 300000, schedule_seed_start: 600000}
+
+models:
+  input_dim: 19
+  state_dim: 4
+  ode: {max_step: 0.02}
+  ctrnn: {initial_tau: 0.20, min_tau: 0.001, max_step: 0.02}
+  liquid: {cfc_mode: default, ode_unfolds: 6}
+
+matching:
+  basis: effective_active_trainable_parameters
+  target_parameters: 20000
+  tolerance_fraction: 0.05
+  minimum_hidden_dim: 7
+  maximum_hidden_dim: 192
+  registered_models: [lstm, odernn, ctrnn, ltc, cfc, ncp_cfc, random_sparse_cfc]
+  ncp_sparsity: 0.50
+  ncp_seed: 20261102
+  random_topology_seed: 20261103
+
+training:
+  seeds: [101, 202, 303, 404, 505]
+  epochs: 100
+  early_stopping_enabled: false
+  optimizer_steps_per_epoch: 500
+  planned_optimizer_steps: 50000
+  minimum_delta: 1.0e-7
+  batch_size: 32
+  window_steps: 64
+  burn_in_steps: 16
+  learning_rate: 0.001
+  weight_decay: 0.0
+  gradient_clip_norm: 1.0
+
+evaluation:
+  iid_dropout_probabilities: [0.0, 0.3]
+  burst_lengths: [0, 5]
+  burst_stationary_probability: 0.30
+  delay_steps: [0, 4]
+  base_perturbation:
+    sensor_noise_std: 0.002
+    timestamp_measurement_jitter_std: 0.0005
+  nonlearned_baselines: [full_state_pd, zoh_pd, kalman_pd]
+  kalman:
+    process_variance: 0.001
+    measurement_variance: 0.002
+    initial_variance: 1.0
+  recovery_floor_m: 0.02
+  recovery_baseline_multiplier: 1.0
+  recovery_baseline_window_steps: 50
+  recovery_consecutive_steps: 10
+  failure_tracking_penalty_m: 1.0
+  failure_noninferiority_margin_absolute: 0.02
+  analysis_seed: 20261105
+  bootstrap_replicates: 10000
